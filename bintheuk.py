@@ -7,6 +7,8 @@ __license__ = "GNU General Public License v3.0"
 __maintainer__ = "Hüsamettin Deniz Özeren"
 __email__ = "denizozeren614@gmail.com"
 
+import os
+from pathlib import Path
 import RPi.GPIO as GPIO
 import time
 from datetime import datetime
@@ -52,6 +54,26 @@ def boot(led_pin_blue, led_pin_green):
     led_off(led_pin_blue)
     led_off(led_pin_green)
     time.sleep(3)
+
+def get_nearest_future_date(dates_series, date_today):
+    # Ensure the dates are in datetime format
+    dates_series = pd.to_datetime(dates_series, format='%Y-%m-%d')
+    
+    # Filter out dates that are in the past
+    future_dates = dates_series[dates_series >= date_today]
+    
+    # If no future dates are available, return None or handle accordingly
+    if future_dates.empty:
+        return None
+    
+    # Calculate the absolute difference between each future date and the reference date
+    differences = (future_dates - date_today).abs()
+    
+    # Get the index of the smallest difference
+    nearest_date_index = differences.idxmin()
+    
+    # Return the nearest future date
+    return future_dates.loc[nearest_date_index]
 
 
 # # scapre council website for bin collection dates
@@ -122,7 +144,43 @@ def boot(led_pin_blue, led_pin_green):
 def led_on_date():
     # this code snippet compare the dates; written by copilot partially.
     date_today = datetime.today()
-    df = pd.read_json("bin_dates2024.json")
+    file_path = Path(__file__).parent
+    df = pd.read_json(os.path.join(file_path, "bin_dates2024.json"))
+
+    # Get the minimum dates from from get_nearest_future_date function
+    blue_date = get_nearest_future_date(df['blue'], date_today)
+    green_date = get_nearest_future_date(df['green'], date_today)
+
+    # Calculate the difference in days
+    day_difference_blue = abs((blue_date - date_today).days)
+    day_difference_green = abs((green_date - date_today).days)
+    print('Days to blue bin: ' + str(day_difference_blue))
+    print('Days to green bin: ' + str(day_difference_green))
+
+
+    if day_difference_blue < day_difference_green:
+        if day_difference_blue < 2:
+            print("Blue bin day is in two days")
+            led_on(led_pin_blue)
+        else:
+            print("There is {} days for blue bin".format(day_difference_blue))
+    else:
+        if day_difference_green < 2:
+            print("Green bin day is in two days")
+            led_on(led_pin_blue)
+        else:
+            print("There is {} days for green bin, IT IS NEXT!".format(day_difference_green))
+
+if __name__ == '__main__':
+    boot(led_pin_blue, led_pin_green)
+    print('Boot complete....')
+    # results = scrape_bin_dates()
+    led_on_date()
+
+
+
+
+    """
     df_blue = df['blue']
     df_green = df['green']
     df_blue = pd.to_datetime(df_blue.dropna(), format='%Y-%m-%d').dt.strftime('%Y-%m-%d')
@@ -142,21 +200,4 @@ def led_on_date():
     day_difference_green = abs((min_date_green - date_today).days)
     print(day_difference_blue)
     print(day_difference_green)
-    if day_difference_blue < day_difference_green:
-        if day_difference_blue < 2:
-            print("Blue bin day is in two days")
-            led_on(led_pin_blue)
-        else:
-            print("There is {} days for blue bin".format(day_difference_blue))
-    else:
-        if day_difference_green < 2:
-            print("Green bin day is in two days")
-            led_on(led_pin_blue)
-        else:
-            print("There is {} days for green bin".format(day_difference_green))
-
-if __name__ == '__main__':
-    boot(led_pin_blue, led_pin_green)
-    print('Boot complete....')
-    # results = scrape_bin_dates()
-    led_on_date()
+    """
