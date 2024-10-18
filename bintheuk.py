@@ -167,7 +167,7 @@ def led_on_date():
     else:
         if day_difference_green < 2:
             print("Green bin day is in two days")
-            led_on(led_pin_blue)
+            led_on(led_pin_green)
         else:
             print("There is {} days for green bin, IT IS NEXT!".format(day_difference_green))
 
