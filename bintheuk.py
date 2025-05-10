@@ -145,7 +145,7 @@ def led_on_date():
     # this code snippet compare the dates; written by copilot partially.
     date_today = datetime.today()
     file_path = Path(__file__).parent
-    df = pd.read_json(os.path.join(file_path, "bin_dates2024.json"))
+    df = pd.read_json(os.path.join(file_path, "data", "bin_dates2025.json"))
 
     # Get the minimum dates from from get_nearest_future_date function
     blue_date = get_nearest_future_date(df['blue'], date_today)
